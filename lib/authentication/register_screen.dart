@@ -1,10 +1,18 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart' as fStorage;
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:sellers_app/mainScreens/home_screen.dart';
 import 'package:sellers_app/widgets/custom_text_field.dart';
+import 'package:sellers_app/widgets/error_dialog.dart';
+import 'package:sellers_app/widgets/loading_dialog.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -26,6 +34,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final ImagePicker _picker = ImagePicker();
   Position? position;
   List<Placemark>? placeMarks;
+
+  String sellerImageUrl = '';
+  String completeAddress = '';
 
   // get image from gallery
   Future<void> _getImage() async {
@@ -78,28 +89,132 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     Placemark pMark = placeMarks![0];
-    String completeAddress =
+    completeAddress =
         '${pMark.subThoroughfare} ${pMark.thoroughfare}, ${pMark.subLocality} ${pMark.locality}, ${pMark.subAdministrativeArea}, ${pMark.administrativeArea} ${pMark.postalCode}, ${pMark.country}';
 
     locationController.text = completeAddress;
     print(position);
+  }
 
-    // Position newPosition = await Geolocator.getCurrentPosition(
-    //   desiredAccuracy: LocationAccuracy.high,
-    // );
+  Future<void> formValidation() async {
+    if (imageXFile == null) {
+      showDialog(
+        context: context,
+        builder: (c) {
+          return const ErrorDialog(
+            message: 'Please select an image!',
+          );
+        },
+      );
+    } else {
+      if (passwordController.text == comfirmPasswordController.text) {
+        if (comfirmPasswordController.text.isNotEmpty &&
+            emailController.text.isNotEmpty &&
+            nameController.text.isNotEmpty &&
+            phoneController.text.isNotEmpty &&
+            locationController.text.isNotEmpty) {
+          //uploading image
+          showDialog(
+            context: context,
+            builder: (c) {
+              return const LoadingDialog(
+                message: 'Registering account',
+              );
+            },
+          );
 
-    // position = newPosition;
-    // placeMarks = await placemarkFromCoordinates(
-    //   position!.latitude,
-    //   position!.longitude,
-    // );
+          String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+          fStorage.Reference reference = fStorage.FirebaseStorage.instance
+              .ref()
+              .child('sellers')
+              .child(fileName);
+          fStorage.UploadTask uploadTask =
+              reference.putFile(File(imageXFile!.path));
+          fStorage.TaskSnapshot taskSnapshot =
+              await uploadTask.whenComplete(() {});
+          await taskSnapshot.ref.getDownloadURL().then((url) {
+            sellerImageUrl = url;
 
-    // Placemark pMark = placeMarks![0];
+            //save info to firestore
+            authenticateSellerAndSignUp();
+          });
+        } else {
+          showDialog(
+            context: context,
+            builder: (c) {
+              return const ErrorDialog(
+                message: 'Please write the required inro for registration',
+              );
+            },
+          );
+        }
+      } else {
+        showDialog(
+          context: context,
+          builder: (c) {
+            return const ErrorDialog(
+              message: 'Password do not match!',
+            );
+          },
+        );
+      }
+    }
+  }
 
-    // String completeAddress =
-    //     '${pMark.subThoroughfare} ${pMark.thoroughfare}, ${pMark.subLocality} ${pMark.locality}, ${pMark.subAdministrativeArea}, ${pMark.administrativeArea} ${pMark.postalCode}, ${pMark.country}';
+  void authenticateSellerAndSignUp() async {
+    User? currentUser;
+    final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+    await firebaseAuth
+        .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim())
+        .then((auth) {
+      currentUser = auth.user;
+    }).catchError((error) {
+      Navigator.pop(context);
+      showDialog(
+        context: context,
+        builder: (c) {
+          return ErrorDialog(
+            message: error.message.toString(),
+          );
+        },
+      );
+    });
 
-    // locationController.text = completeAddress;
+    if (currentUser != null) {
+      saveDataToFirestore(currentUser!).then((value) {
+        Navigator.pop(context);
+        //send user to HomePage
+        Route newRoute = MaterialPageRoute(builder: (c) => const HomeScreen());
+        Navigator.pushReplacement(context, newRoute);
+      });
+    }
+  }
+
+  Future saveDataToFirestore(User currentUser) async {
+    FirebaseFirestore.instance.collection('sellers').doc(currentUser.uid).set(
+      {
+        'sellerUID': currentUser.uid,
+        'sellerEmail': currentUser.email,
+        'sellerName': nameController.text.trim(),
+        'sellerAvatarUrl': sellerImageUrl,
+        'phone': phoneController.text.trim(),
+        'adress': completeAddress,
+        'status': 'approved',
+        'earnings': 0.0,
+        'lat': position!.latitude,
+        'lng': position!.longitude,
+      },
+    );
+
+    //save data locally
+    SharedPreferences? sharedPreferences =
+        await SharedPreferences.getInstance();
+    await sharedPreferences.setString('uid', currentUser.uid);
+    await sharedPreferences.setString('email', currentUser.email.toString());
+    await sharedPreferences.setString('name', nameController.text.trim());
+    await sharedPreferences.setString('photoUrl', sellerImageUrl);
   }
 
   @override
@@ -219,6 +334,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
             onPressed: () {
+              formValidation();
               print('clicked 1');
             },
           ),

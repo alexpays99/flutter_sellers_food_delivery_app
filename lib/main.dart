@@ -1,5 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:sellers_app/authentication/auth_screen.dart';
+import 'package:sellers_app/authentication/login_screen.dart';
+import 'package:sellers_app/mainScreens/home_screen.dart';
 import 'package:sellers_app/splashScreen/splash_screen.dart';
 
 Future<void> main() async {
@@ -20,6 +23,12 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: const SplashScreen(),
+      //initialRoute: '/auth',
+      routes: {
+        '/auth': (context) => const AuthScren(),
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }
