@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sellers_app/authentication/auth_screen.dart';
 import 'package:sellers_app/global/gloval.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,6 +30,24 @@ class _HomeScreenState extends State<HomeScreen> {
               tileMode: TileMode.clamp,
             ),
           ),
+        ),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          child: const Text('Logout'),
+          style: ElevatedButton.styleFrom(
+            primary: Colors.cyan,
+          ),
+          onPressed: () {
+            firebaseAuth.signOut().then((value) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (c) => const AuthScren(),
+                ),
+              );
+            });
+          },
         ),
       ),
     );
