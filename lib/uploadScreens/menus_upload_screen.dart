@@ -77,7 +77,7 @@ class _MenusUploadScreenState extends State<MenusUploadScreen> {
                   backgroundColor: MaterialStateProperty.all(Colors.amber),
                   shape: MaterialStateProperty.all(
                     RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
