@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sellers_app/global/gloval.dart';
 import 'package:sellers_app/mainScreens/home_screen.dart';
 
@@ -10,6 +11,9 @@ class MenusUploadScreen extends StatefulWidget {
 }
 
 class _MenusUploadScreenState extends State<MenusUploadScreen> {
+  XFile? imageXFile;
+  final ImagePicker _picker = ImagePicker();
+
   defaultScreen() {
     return Scaffold(
       appBar: AppBar(
@@ -81,13 +85,86 @@ class _MenusUploadScreenState extends State<MenusUploadScreen> {
                     ),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  takeImage(context);
+                },
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  takeImage(context) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return SimpleDialog(
+            title: const Text(
+              'Menu Image',
+              style:
+                  TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+            ),
+            children: [
+              SimpleDialogOption(
+                child: const Text(
+                  'Capture with Camera',
+                  style: TextStyle(
+                    color: Colors.grey,
+                  ),
+                ),
+                onPressed: captureImageWithCamera,
+              ),
+              SimpleDialogOption(
+                child: const Text(
+                  'Select from Gallery',
+                  style: TextStyle(
+                    color: Colors.grey,
+                  ),
+                ),
+                onPressed: pickImageFromGallery,
+              ),
+              SimpleDialogOption(
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Colors.red,
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          );
+        });
+  }
+
+  captureImageWithCamera() async {
+    Navigator.pop(context);
+
+    imageXFile = await _picker.pickImage(
+      source: ImageSource.camera,
+      maxHeight: 680,
+      maxWidth: 1280,
+    );
+
+    setState(() {
+      imageXFile;
+    });
+  }
+
+  pickImageFromGallery() async {
+    Navigator.pop(context);
+
+    imageXFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxHeight: 680,
+      maxWidth: 1280,
+    );
+
+    setState(() {
+      imageXFile;
+    });
   }
 
   @override
