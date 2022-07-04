@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sellers_app/mainScreens/home_screen.dart';
+import 'package:sellers_app/widgets/error_dialog.dart';
+import 'package:sellers_app/widgets/progress_bar.dart';
 
 class MenusUploadScreen extends StatefulWidget {
   const MenusUploadScreen({Key? key}) : super(key: key);
@@ -16,6 +18,8 @@ class _MenusUploadScreenState extends State<MenusUploadScreen> {
 
   TextEditingController shortInfoController = TextEditingController();
   TextEditingController titleController = TextEditingController();
+
+  bool uploading = false;
 
   defaultScreen() {
     return Scaffold(
@@ -199,13 +203,14 @@ class _MenusUploadScreenState extends State<MenusUploadScreen> {
             color: Colors.white,
           ),
           onPressed: () {
-            //Navigator.push(context,MaterialPageRoute(builder: (c) => const HomeScreen()),);
             clearMenuUploadForm();
           },
         ),
         actions: [
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              uploading ? null : validateUploadForm();
+            },
             child: const Text(
               'Add',
               style: TextStyle(
@@ -220,6 +225,7 @@ class _MenusUploadScreenState extends State<MenusUploadScreen> {
       ),
       body: ListView(
         children: [
+          uploading == true ? linearProgress() : const Text(''),
           Container(
             height: 230,
             width: MediaQuery.of(context).size.width * 0.8,
@@ -301,6 +307,37 @@ class _MenusUploadScreenState extends State<MenusUploadScreen> {
       titleController.clear();
       imageXFile = null;
     });
+  }
+
+  validateUploadForm() {
+    if (imageXFile != null) {
+      if (shortInfoController.text.isNotEmpty &&
+          titleController.text.isNotEmpty) {
+        setState(() {
+          uploading = true;
+        });
+        // upload image
+        // save info to firebase
+      } else {
+        showDialog(
+          context: context,
+          builder: (c) {
+            return const ErrorDialog(
+              message: 'Please write title and menu info.',
+            );
+          },
+        );
+      }
+    } else {
+      showDialog(
+        context: context,
+        builder: (c) {
+          return const ErrorDialog(
+            message: 'Please pick an image',
+          );
+        },
+      );
+    }
   }
 
   @override
