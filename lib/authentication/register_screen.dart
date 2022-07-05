@@ -93,7 +93,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         '${pMark.subThoroughfare} ${pMark.thoroughfare}, ${pMark.subLocality} ${pMark.locality}, ${pMark.subAdministrativeArea}, ${pMark.administrativeArea} ${pMark.postalCode}, ${pMark.country}';
 
     locationController.text = completeAddress;
-    print(position);
   }
 
   Future<void> formValidation() async {
@@ -113,7 +112,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             nameController.text.isNotEmpty &&
             phoneController.text.isNotEmpty &&
             locationController.text.isNotEmpty) {
-          //uploading image
           showDialog(
             context: context,
             builder: (c) {
@@ -333,7 +331,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             onPressed: () {
               formValidation();
-              print('clicked 1');
             },
           ),
         ],

@@ -1,8 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:sellers_app/authentication/auth_screen.dart';
 import 'package:sellers_app/global/gloval.dart';
+import 'package:sellers_app/model/menus.dart';
 import 'package:sellers_app/uploadScreens/menus_upload_screen.dart';
+import 'package:sellers_app/widgets/info_design.dart';
 import 'package:sellers_app/widgets/my_drawer.dart';
+import 'package:sellers_app/widgets/progress_bar.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:sellers_app/widgets/text_widget_header.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -50,7 +56,46 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Center(),
+      body: CustomScrollView(
+        slivers: [
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: TextWidgetHeader(title: 'My Menus'),
+          ),
+          SliverToBoxAdapter(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('sellers')
+                  .doc(sharedPreferences!.getString('uid'))
+                  .collection('menus')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                return !snapshot.hasData
+                    ? Center(
+                        child: circularProgress(),
+                      )
+                    : StaggeredGridView.countBuilder(
+                        shrinkWrap: true,
+                        crossAxisCount: 1,
+                        staggeredTileBuilder: (c) => const StaggeredTile.fit(1),
+                        itemBuilder: (context, index) {
+                          Menus menuModel = Menus.fromJson(
+                            snapshot.data!.docs[index].data()!
+                                as Map<String, dynamic>,
+                          );
+
+                          return InfoDesignWidget(
+                            model: menuModel,
+                            context: context,
+                          );
+                        },
+                        itemCount: snapshot.data!.docs.length,
+                      );
+              },
+            ),
+          )
+        ],
+      ),
     );
   }
 }

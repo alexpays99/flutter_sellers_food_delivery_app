@@ -7,6 +7,7 @@ import 'package:sellers_app/mainScreens/home_screen.dart';
 import 'package:sellers_app/widgets/error_dialog.dart';
 import 'package:sellers_app/widgets/progress_bar.dart';
 import 'package:firebase_storage/firebase_storage.dart' as storageRef;
+//import 'package:cached_network_image/cached_network_image.dart';
 
 class MenusUploadScreen extends StatefulWidget {
   const MenusUploadScreen({Key? key}) : super(key: key);
@@ -182,7 +183,7 @@ class _MenusUploadScreenState extends State<MenusUploadScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'U[ploading] New Menu',
+          'Uploading New Menu',
           style: TextStyle(fontSize: 20, fontFamily: 'Lobster'),
         ),
         centerTitle: true,
@@ -321,7 +322,7 @@ class _MenusUploadScreenState extends State<MenusUploadScreen> {
           uploading = true;
         });
         // upload image
-        String downloadUrl = uoloadImage(File(imageXFile!.path)).toString();
+        String downloadUrl = await uploadImage(File(imageXFile!.path));
         // save info to firebase
         saveInfo(downloadUrl);
       } else {
@@ -370,7 +371,7 @@ class _MenusUploadScreenState extends State<MenusUploadScreen> {
     });
   }
 
-  uoloadImage(mImageFile) async {
+  uploadImage(mImageFile) async {
     storageRef.Reference reference =
         storageRef.FirebaseStorage.instance.ref().child('menus');
     storageRef.UploadTask uploadTask =
