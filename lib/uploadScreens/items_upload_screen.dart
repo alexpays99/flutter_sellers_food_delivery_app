@@ -361,6 +361,9 @@ class _ItemsUploadScreenState extends State<ItemsUploadScreen> {
     setState(() {
       shortInfoController.clear();
       titleController.clear();
+      priceController.clear();
+      descriptionController.clear();
+
       imageXFile = null;
     });
   }
@@ -368,7 +371,9 @@ class _ItemsUploadScreenState extends State<ItemsUploadScreen> {
   validateUploadForm() async {
     if (imageXFile != null) {
       if (shortInfoController.text.isNotEmpty &&
-          titleController.text.isNotEmpty) {
+          titleController.text.isNotEmpty &&
+          descriptionController.text.isNotEmpty &&
+          priceController.text.isNotEmpty) {
         setState(() {
           uploading = true;
         });
@@ -402,29 +407,51 @@ class _ItemsUploadScreenState extends State<ItemsUploadScreen> {
     final ref = FirebaseFirestore.instance
         .collection('sellers')
         .doc(sharedPreferences!.getString('uid'))
-        .collection('menus');
+        .collection('menus')
+        .doc(widget.model!.menuID)
+        .collection('items');
 
     ref.doc(uniqueIdName).set({
-      'menuID': uniqueIdName,
+      'itemID': uniqueIdName,
+      'menuUID': widget.model!.menuID,
       'sellerUID': sharedPreferences!.getString('uid'),
-      'menuInfo': shortInfoController.text.toString(),
-      'menuTitle': titleController.text.toString(),
+      'sellerName': sharedPreferences!.getString('name'),
+      'shortInfo': shortInfoController.text.toString(),
+      'longDescription': descriptionController.text.toString(),
+      'price': int.parse(priceController.text),
+      'title': titleController.text.toString(),
       'publishedDate': DateTime.now(),
       'status': 'available',
       'thumbnailUrl': downloadUrl,
-    });
+    }).then((value) {
+      final itemsRef = FirebaseFirestore.instance.collection('items');
 
-    clearMenuUploadForm();
+      itemsRef.doc(uniqueIdName).set({
+        'itemID': uniqueIdName,
+        'menuUID': widget.model!.menuID,
+        'sellerUID': sharedPreferences!.getString('uid'),
+        'sellerName': sharedPreferences!.getString('name'),
+        'shortInfo': shortInfoController.text.toString(),
+        'longDescription': descriptionController.text.toString(),
+        'price': int.parse(priceController.text),
+        'title': titleController.text.toString(),
+        'publishedDate': DateTime.now(),
+        'status': 'available',
+        'thumbnailUrl': downloadUrl,
+      });
+    }).then((value) {
+      clearMenuUploadForm();
 
-    setState(() {
-      uniqueIdName = DateTime.now().microsecondsSinceEpoch.toString();
-      uploading = false;
+      setState(() {
+        uniqueIdName = DateTime.now().microsecondsSinceEpoch.toString();
+        uploading = false;
+      });
     });
   }
 
   uploadImage(mImageFile) async {
     storageRef.Reference reference =
-        storageRef.FirebaseStorage.instance.ref().child('menus');
+        storageRef.FirebaseStorage.instance.ref().child('items');
     storageRef.UploadTask uploadTask =
         reference.child(uniqueIdName + '.jpg').putFile(mImageFile);
     storageRef.TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() {});
